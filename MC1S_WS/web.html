@@ -29,22 +29,21 @@
 
     <script>
         var socket = new WebSocket('ws://localhost:12345');
+        var client_id = "webclient" + Math.random().toString(36).substr(2, 9); // Generate a pseudo random client ID
 
         socket.onopen = function(e) {
             console.log("Connection established!");
         };
 
         socket.onmessage = function(event) {
-            console.log("Message received: " + event.data);
-            var messages = document.getElementById('messages');
-            messages.innerHTML += "<p>" + event.data + "</p>";
+            var data = JSON.parse(event.data);
+            addMessage(data.sender, data.message); // Display received message
         };
 
         socket.onclose = function(event) {
             if (event.wasClean) {
                 console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
             } else {
-                // e.g. server process killed or network down
                 console.log('[close] Connection died');
             }
         };
@@ -53,10 +52,17 @@
             console.log(`[error] ${error.message}`);
         };
 
+        function addMessage(sender, message) {
+            var messages = document.getElementById('messages');
+            messages.innerHTML += `<p><b>${sender}:</b> ${message}</p>`;
+        }
+
         function sendMessage() {
             var message = document.getElementById('message_text').value;
             if (message.trim() !== "") {
-                socket.send(message);
+                var payload = JSON.stringify({ "sender": client_id, "message": message });
+                socket.send(payload); // Send the message as a JSON-formatted string
+                addMessage(client_id, message); // Also display the message in the 'messages' div
                 document.getElementById('message_text').value = '';  // Clear the input field
             }
         }
