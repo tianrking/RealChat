@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Chat</title>
+    <style>
+        #messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        #message_text {
+            width: calc(100% - 110px);
+            padding: 10px;
+        }
+
+        #send {
+            width: 100px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="messages"></div>
+    <input type="text" id="message_text">
+    <button id="send" onclick="sendMessage();">Send</button>
+
+    <script>
+        var socket = new WebSocket('ws://localhost:12345');
+
+        socket.onopen = function(e) {
+            console.log("Connection established!");
+        };
+
+        socket.onmessage = function(event) {
+            console.log("Message received: " + event.data);
+            var messages = document.getElementById('messages');
+            messages.innerHTML += "<p>" + event.data + "</p>";
+        };
+
+        socket.onclose = function(event) {
+            if (event.wasClean) {
+                console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+            } else {
+                // e.g. server process killed or network down
+                console.log('[close] Connection died');
+            }
+        };
+
+        socket.onerror = function(error) {
+            console.log(`[error] ${error.message}`);
+        };
+
+        function sendMessage() {
+            var message = document.getElementById('message_text').value;
+            if (message.trim() !== "") {
+                socket.send(message);
+                document.getElementById('message_text').value = '';  // Clear the input field
+            }
+        }
+    </script>
+</body>
+</html>
+
